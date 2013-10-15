@@ -88,6 +88,7 @@ class PointBrowser:
         
         for k in range(0,len(x)):
             m = 0
+
             for j in range(-N,N+1):
                 f_exp = x[k]*(MU[columnindex]+pi*j/L)
 

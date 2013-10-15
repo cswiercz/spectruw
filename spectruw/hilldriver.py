@@ -46,8 +46,9 @@ def main_driver():
         P = int(pbox.get())
         # Number of mu values
         Z = int(zbox.get())
-        # Boolean for Eigenvectors
-        vecflag = bool(vecvar.get()) 
+        # Boolean for Eigenvectors (force for efcn plotting)
+        #vecflag = bool(vecvar.get()) 
+        vecflag = True
         # Boolean for using existing Fourier Coefficients
         coefbool = bool(coefvar.get())
         w_param.destroy()
@@ -227,6 +228,9 @@ def main_driver():
         
             browser = PointBrowser(spectrumplot,efcnplot,spectrumx,spectrumy,line,A,P,L,N,MU,plot)
 
+            plot.canvas.mpl_connect('pick_event', browser.onpick)
+            plot.canvas.mpl_connect('key_press_event', browser.onpress)
+
             canvas2.mpl_connect('pick_event', browser.onpick)
             canvas2.mpl_connect('key_press_event', browser.onpress)
         
@@ -238,7 +242,11 @@ def main_driver():
             Tk.Button(master=w_spectrum, text='Close', command=_quit).pack(side=Tk.BOTTOM)           
             Tk.Button(master=w_spectrum, text='New', command=main_driver).pack(side=Tk.BOTTOM)
             w_matrix.destroy()
-            plot.show()
+            
+            #FIX: the following two lines have the same effect but produce error
+            #canvas2.update()
+            #activates callbacks to browser but produces AttributeError
+            plot.show() 
 
       
         w_matrix = Tk.Tk()
