@@ -11,6 +11,7 @@ from scipy.lib.lapack.flapack import zggev, zgeev
 from scipy.special import *
 import sys
 import cPickle
+import logging
 
 ###############################################
 ###     Functions for testing purposes      ###
@@ -109,7 +110,13 @@ def reformat(coef_strlist,V):
 	
 	return vec_coef_list		
 
+def insert_parameter(coef_strlist,param,num):
+	'''Accepts a list of string coefficient functions and replaces every instance
+	of param string with num.
 
+	Function returns the modified list of string coefficient functions.'''
+	
+	return coef_strlist.replace(param, str(num))
 
 ###############################################################
 ###Matrix creation and E-value/E-vector estimation functions###
@@ -182,7 +189,8 @@ def fcoef_old(L,N,F):
 
 
 def fcoef(L,N,F):
-    print 'Computing Fourier Coef using FFT'
+
+    logging.info('Computing Fourier Coef using FFT')
     C = zeros(2*N+1,complex)
     p = 2.0
     while p<N:
@@ -274,7 +282,7 @@ def vecmat(U,mu,L,N,P,*FD):
 		C = {}
 	
 	#for mu_val in mu:
-	print 'Constructing Matrix'
+	logging.info('Constructing Matrix')
 	for i in range(s):
 		if fd_exist is False:
 			C[i]={}
@@ -333,11 +341,10 @@ def hill_comp(MU,L,N,P,U,R=None,evecs=False,*fcoefs):
 				M,K = vecmat(R,mu_val,L,N,P)
 			fcoefs_exist = True
 		if evecs:
-			print 'Computing Eigenvectors'
+			logging.info('Computing Eigenvectors')
 			if R is not None:
 				print 'Generalized Problem'
 				a,b,vl,V[p,:,:],info = zggev(H,M,0,1)
-				print info,'Eigenvalues Did Not Converge'
 				if info > 0:
 					print 'Trying to Invert'
 					E[p,:],vl,V[p,:,:],info = zgeev(dot(inv(M),H),0,1)
@@ -346,12 +353,13 @@ def hill_comp(MU,L,N,P,U,R=None,evecs=False,*fcoefs):
 					E[p,:] = a/b
 			else:
 				E[p,:],vl,V[p,:,:],info = zgeev(H,0,1)
-				print info,'Eigenvalues Did Not Converge'
+				if info > 0:
+					print info,'Eigenvalues Did Not Converge'
 		else:
 			if R is not None:
 				print 'Generalized Problem'
 				a,b,vl,vr,info = zggev(H,M,0,0)
-				print info,'Eigenvalues Did Not Converge'
+				# print info,'Eigenvalues Did Not Converge'
 				if info > 0:
 					print 'Trying to Invert'
 					E[p,:],vl,vr,info = zgeev(dot(inv(M),H),0,0)
@@ -360,7 +368,8 @@ def hill_comp(MU,L,N,P,U,R=None,evecs=False,*fcoefs):
 					E[p,:] = a/b
 			else:
 				E[p,:],vl,vr,info = zgeev(H,0,0)
-				print info,'Eigenvalues Did Not Converge'
+				if info > 0:
+					print info,'Eigenvalues Did Not Converge'
 		p = p + 1
 	if R is not None:
 		return E,C,V,K,H
