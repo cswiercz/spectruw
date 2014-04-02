@@ -110,6 +110,42 @@ def reformat(coef_strlist,V):
 	
 	return vec_coef_list		
 
+def raw_reformat(coef_strlist,V):
+	'''Accepts a list of coefficient functions separated by ";" for each 
+	scalar problem and ":" for each coefficient function within a particular 
+	scalar problem. V represents the dimension of the vector problem.
+	
+	Function returns a nested list such that first level of nesting represents 
+	the ith equation in system, second level the jth function and finally the
+	kth coefficient. All numbering done in Python syntax, i.e., starting 
+	from 0. The returned list is in proper Python syntax.'''
+	coef_strlist = coef_strlist.split(';')
+	vec_coef_list = []
+	l = len(coef_strlist)
+	coef_list = []
+	i = 0.0
+	for scalar_strlist in coef_strlist:
+
+		scalar_strlist = scalar_strlist.split(':')
+		coef = []
+		
+		for coef_str in scalar_strlist:
+			#coef_str = syntax_chk(coef_str)
+			if 'exceptions' in coef_str:
+				return coef_str
+			else:
+				coef.append(coef_str)
+	
+		coef_list.append(coef)
+		i = i + 1.
+
+		if i%V == 0:
+			vec_coef_list.append(coef_list)
+			coef_list = []
+		
+	
+	return vec_coef_list		
+
 def insert_parameter(coef_strlist,param,num):
 	'''Accepts a list of string coefficient functions and replaces every instance
 	of param string with num.

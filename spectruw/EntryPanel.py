@@ -63,7 +63,7 @@ class EntryPanel(Panel):
                             derivstr = derivstr + "'"
 
                         if (i == 0):
-                            derivstr = u'y = \u03bby' # unicode lambda
+                            derivstr = 'y' 
                         else:
                             derivstr = 'y'+derivstr+'+'
 
@@ -83,11 +83,11 @@ class EntryPanel(Panel):
                     Button(master=eqnDialog,text='Continue',command=_saveCoefficients).grid(row=order+2)
             
                 eqnDialog = Panel()
-                eqnDialog.wm_title("Enter Coefficients")
+                eqnDialog.wm_title(s+": Enter Coefficients")
                 Label(master=eqnDialog, text='Maximum Differential Order:').grid(row=0)
                 orderstr =  StringVar()
                 orderbox = Entry(master=eqnDialog, textvariable=orderstr)
-                orderbox.insert(0, "2")
+                orderbox.insert(0, "0")
                 orderbox.grid(row=0,column=1)
                 b = Button(master=eqnDialog, text='Setup Equation',command=_enterCoefficients)
                 b.grid(row=0,column=2)
@@ -99,6 +99,7 @@ class EntryPanel(Panel):
             counter = 0
 
             Label(master=sessionDialog, text='Enter Equations:').grid(row=currentrow,column=0)
+            Label(master=sessionDialog, text=u' = \u03bb y').grid(row=currentrow+2,column=V+1)
 
             for i in range(0,V):
                 currentrow = currentrow+1
@@ -112,6 +113,7 @@ class EntryPanel(Panel):
                     b.configure(command=lambda widget=b.cget('text'): _enterSystem(widget))
                     counter += 1
 
+
             currentrow = currentrow+1
 
             def _plotSession(Z):
@@ -123,7 +125,8 @@ class EntryPanel(Panel):
                     end = endEntry.get()
                     steps = stepsEntry.get()
                     param = param+':'+start+':'+end+':'+steps
-
+                
+                debug = False
                 sysHashmap = { "VectorSize" : V, 
                                "FourierModes" : N, 
                                "Period" : L, 
@@ -131,14 +134,15 @@ class EntryPanel(Panel):
                                "MuVals" : Z , 
                                "Coefficients" : coeffstr ,
                                "Parameters" : param}
-
-                # sysHashmap = { "VectorSize" : 1, 
-                #                "FourierModes" : 10, 
-                #                "Period" : 2*pi, 
-                #                "NumPeriods" : 2, 
-                #                "MuVals" : 50 , 
-                #                "Orders" : "4", 
-                #                "Coefficients" : "(1-.26^2)*sin(x)*cos(x):.26:-sin(x):0:-1" }
+                if debug:
+                    sysHashmap = { "VectorSize" : 1, 
+                                   "FourierModes" : 10, 
+                                   "Period" : 2*pi, 
+                                   "NumPeriods" : 2, 
+                                   "MuVals" : 50 , 
+                                   "Orders" : "4", 
+                                   "Coefficients" : "(1-a^2)*sin(x)*cos(x):a:-sin(x):0:-1",
+                                   "Parameters" : "a:0:1:10" }
 
                 sessionDialog.destroy()
                 if len(param) > 0:

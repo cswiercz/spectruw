@@ -97,7 +97,7 @@ class AnimationPanel(Panel):
 
         cmap = plt.cm.jet
         numcolors = len(specMat)
-
+        
         spectrumplot = plot.add_subplot(211)
         spectrumplot.set_title('Animation Window')
                 
@@ -114,6 +114,9 @@ class AnimationPanel(Panel):
                               color=cmap(1.*k/numcolors),marker='.')
             k = k+1
 
+        xlim = spectrumplot.get_xlim()
+        ylim = spectrumplot.get_ylim()
+
         colorax = plot.add_axes([0.92, 0.1, 0.03, 0.8])
         cb = matplotlib.colorbar.ColorbarBase(colorax, cmap=cmap, spacing='proportional', 
                                               ticks=paramValues, boundaries=paramValues, 
@@ -122,10 +125,9 @@ class AnimationPanel(Panel):
         
         sliderplot = plot.add_subplot(212)
         sliderplot.plot(real(spectra[0]),imag(spectra[0]),'b.')
+        sliderplot.set_xlim(xlim[0],xlim[1],auto=False)
+        sliderplot.set_ylim(ylim[0],ylim[1],auto=False)
         
-        sliderplot.set_ylabel('$\mathrm{Im }\lambda$')
-
-
         axparam = plot.add_axes([0.2, 0, 0.65, 0.03], axisbg='lightgoldenrodyellow')
         sparam = Slider(axparam, 'param', paramValues[0], paramValues[-1], 
                         valinit=paramValues[-1])
@@ -136,9 +138,12 @@ class AnimationPanel(Panel):
             index = int((val-paramValues[0])/step)
             sliderplot.plot(real(spectra[index]),imag(spectra[index]),'b.')
             sliderplot.set_xlabel('$\mathrm{Re }\lambda$')
-          
+            spectrumplot.set_ylabel('$\mathrm{Im }\lambda$')
+            sliderplot.set_xlim(xlim[0],xlim[1],auto=False)
+            sliderplot.set_ylim(ylim[0],ylim[1],auto=False)
+                            
         sparam.on_changed(_update)
-
+        
         spectrumplot.set_xlabel('$\mathrm{Re }\lambda$')
         spectrumplot.set_ylabel('$\mathrm{Im }\lambda$')
         sliderplot.set_xlabel('$\mathrm{Re }\lambda$')
