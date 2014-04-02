@@ -242,11 +242,15 @@ class SessionPanel(Panel):
         ind = 0
 
         def _select_mu(widget):
-            p = float(slider.get())
+            if len(param_str)>0:
+                p = float(slider.get())
 
-            for i in range(0,len(paramValues)):
-                if paramValues[i] >= p:
-                    break
+                for i in range(0,len(paramValues)):
+                    if paramValues[i] >= p:
+                        break
+            else:
+                i = 0
+
             m = float(widget.cget('text'))
             intvar = int(self.getvar(widget.cget('variable')))
             itemindex = numpy.where(abs(self.MU - m) < numpy.finfo(numpy.single).eps)
