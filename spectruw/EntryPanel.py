@@ -137,7 +137,7 @@ class EntryPanel(Panel):
                 if debug:
                     sysHashmap = { "VectorSize" : 1, 
                                    "FourierModes" : 10, 
-                                   "Period" : 2*pi, 
+                                   "Period" : pi, 
                                    "NumPeriods" : 2, 
                                    "MuVals" : 50 , 
                                    "Orders" : "4", 
@@ -145,9 +145,9 @@ class EntryPanel(Panel):
                                    "Parameters" : "a:0:1:10" }
 
                 sessionDialog.destroy()
-                if len(param) > 0:
-                    anipanel = AnimationPanel(sysHashmap)
-                    anipanel.withdraw()
+#                 if len(param) > 0:
+#                     anipanel = AnimationPanel(sysHashmap)
+#                     anipanel.withdraw()
                 SessionPanel(sysHashmap)
 
             currentrow = currentrow + 1

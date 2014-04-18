@@ -11,12 +11,18 @@ from numpy import arange, sin, pi
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
+from fractions import gcd
 import pdb
 import sys
 if sys.version_info[0] < 3:
     import Tkinter as Tk
 else:
     import tkinter as Tk
+
+cMidground = 'MediumBlue'
+cForeground = 'Aqua'
+cReal = 'MediumBlue'
+cImag = 'Crimson' #IndianRed
 
 class SessionPanel(Panel):
     gPolar = False
@@ -27,8 +33,9 @@ class SessionPanel(Panel):
     L = None
     P = None
     U = None
-    cid = None
-    
+    cid = None   
+    plot_handles = None
+    colors = None
     def __init__(self,sysHashmap, *args, **kwargs):
 
         Panel.__init__(self, *args, **kwargs)
@@ -200,21 +207,28 @@ class SessionPanel(Panel):
         spectrumplot.cla()
         spectrum = []
         A = specMat[ind]
+
+        self.colors = [cMidground]*(len(self.MU)*len(A[0][0]))
+
         for i in range(len(self.MU)):
             for j in range(len(A[0][i])):
                 spectrum.append(A[0][i][j])
+        self.plot_handles = spectrumplot.scatter(real(A[0]),imag(A[0]),c=self.colors,edgecolor='black',linewidth=0.15,alpha=0.7,picker=True)
+
+        self.plot_handles.set_facecolors(self.colors)
+
 
         xs = real(spectrum)
         ys = imag(spectrum)
 
-        line = spectrumplot.plot(xs,ys, 'bo', picker=5)
+        #line = spectrumplot.plot(xs,ys, 'bo', picker=5)
 
         selected,  = spectrumplot.plot([xs[0]], [ys[0]], 'o', ms=12, alpha=0.75,
                                        color='lightgoldenrodyellow', visible=False)
         def onclick(event):
             n = len(event.ind)
             if not n: return True
-        
+
             # the click locations
             x = event.mouseevent.xdata
             y = event.mouseevent.ydata
@@ -223,7 +237,6 @@ class SessionPanel(Panel):
             dataind = event.ind[indmin]
             lastind = dataind
             
-            #print ind
             self.columnindex = dataind/((2*self.N+1))
             self.rowindex=dataind%((2*self.N+1))
 
@@ -235,6 +248,7 @@ class SessionPanel(Panel):
             
         fig.draw()
         self.cid = fig.mpl_connect('pick_event', onclick)
+
 
     def createInterface(self,equations,vecSize,spectrumplot,plot,efcnplot,plotWindow,A,param_str,paramValues):
 
@@ -256,18 +270,21 @@ class SessionPanel(Panel):
             itemindex = numpy.where(abs(self.MU - m) < numpy.finfo(numpy.single).eps)
             B = A[i]
 
+            M = itemindex[0][0]
+            num = len(B[0][0])
+
             if (intvar==1):
-                spectrumplot.plot(real(B[0][itemindex[0][0]]),imag(B[0][itemindex[0][0]]),'o',color='skyblue',picker=5)
+                self.colors[M*num:M*num+num] = [cForeground]*num                
             else:
-                spectrumplot.plot(real(B[0][itemindex[0][0]]),imag(B[0][itemindex[0][0]]),'bo',picker=5)
-        
+                self.colors[M*num:M*num+num] = [cMidground]*num
+            self.plot_handles.set_facecolors(self.colors)
             plotWindow.draw()
 
         def _changePlot(widget):
             
             self.gPolar = int(self.getvar(widget.cget('variable')))
             x = None
-            # To do: assign to correct parametrix matrix A[ind]
+
             self.plotEigenfunction(efcnplot,plotWindow,A[0],x)
 
         def _changeSpectrum(widget):
@@ -291,7 +308,7 @@ class SessionPanel(Panel):
         Label(master=self,text='Eigenfunction Plot:').pack(side=TOP,anchor='w')
 
         modVar=IntVar()            
-        modbutton = Checkbutton(master=self, text='Phase-plane plot',variable=modVar)
+        modbutton = Checkbutton(master=self, text='Polar plot',variable=modVar)
         modbutton.pack(side=TOP)
         modbutton.configure(command=lambda cbutton=modbutton:_changePlot(cbutton))
         
@@ -325,11 +342,19 @@ class SessionPanel(Panel):
         columnindex = self.columnindex
         rowindex = self.rowindex
         
-        print str(self.columnindex) + ' ' + str(self.rowindex)
         N = len(self.MU)
-        x = arange(0,2*self.L*N/(self.columnindex+1),.01)
+        n = self.columnindex
+
+        if (n == N/2): #corresponds to mu=0
+            s = 1
+        else:
+            N = N-1
+            g = gcd(2*N,2*n-N)
+            s = 2*N/g
+
+
+        x = arange(0,abs(self.L*self.P*s),.01)            
      
-        #x from 0 to (2*) N*L/p (L=period, N= number of mu values) (2 could be 1 or 4) p=index of the mu value. p=1..N
         
         y = numpy.zeros(len(x),dtype=numpy.complex128)
         
@@ -344,8 +369,8 @@ class SessionPanel(Panel):
 
         efcnplot.cla()
         if self.gPolar == False:
-            efcnplot.plot(x,numpy.real(y),label='real')
-            efcnplot.plot(x,numpy.imag(y),'r',label='imag')
+            efcnplot.plot(x,numpy.real(y),cReal,label='real')
+            efcnplot.plot(x,numpy.imag(y),cImag,label='imag')
             efcnplot.legend(fontsize=10)
 
             #efcnplot.set_xlim(0, P*L)
@@ -353,7 +378,7 @@ class SessionPanel(Panel):
             efcnplot.set_ylabel('$y(x)$')
 
         else:            
-            efcnplot.plot(numpy.real(y),numpy.imag(y))
+            efcnplot.plot(numpy.real(y),numpy.imag(y),cReal)
             efcnplot.set_xlabel('$\mathrm{Re}$ $y(x)$')
             efcnplot.set_ylabel('$\mathrm{Im}$ $y(x)$')
         
