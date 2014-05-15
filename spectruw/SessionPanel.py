@@ -33,6 +33,7 @@ class SessionPanel(Panel):
     L = None
     P = None
     U = None
+    V = None
     cid = None   
     plot_handles = None
     colors = None
@@ -64,6 +65,7 @@ class SessionPanel(Panel):
         if mod(muSize,2) == 0:
             muSize += -1
 
+        self.V = vecSize
         self.L = period
         self.N = numFModes
         self.MU = linspace(-pi/(period*self.P),pi/(period*self.P),muSize)
@@ -193,9 +195,9 @@ class SessionPanel(Panel):
         plotWindow.show() 
 
         toolbar = NavigationToolbar2TkAgg(plotWindow,self)
-        toolbar.pack(side=TOP)
+        toolbar.pack(side=TOP,padx=10,pady=10)
 
-        plotWindow.get_tk_widget().pack(side=LEFT,fill=BOTH,expand=True)
+        plotWindow.get_tk_widget().pack(side=LEFT,fill=BOTH,expand=True,padx=10,pady=10)
 
         return [spectrumplot, plot, efcnplot, plotWindow]
     
@@ -203,7 +205,6 @@ class SessionPanel(Panel):
         
         fig.mpl_disconnect(self.cid)
 
-        s = len(self.U)
         spectrumplot.cla()
         spectrum = []
         A = specMat[ind]
@@ -236,9 +237,10 @@ class SessionPanel(Panel):
             indmin = distances.argmin()
             dataind = event.ind[indmin]
             lastind = dataind
-            
-            self.columnindex = dataind/((2*self.N+1))
-            self.rowindex=dataind%((2*self.N+1))
+
+            s = self.V
+            self.columnindex = dataind/(s*(2*self.N+1))
+            self.rowindex=dataind%(s*(2*self.N+1))
 
             selected.set_visible(True)
             selected.set_data(xs[dataind], ys[dataind])
@@ -252,7 +254,6 @@ class SessionPanel(Panel):
 
     def createInterface(self,equations,vecSize,spectrumplot,plot,efcnplot,plotWindow,A,param_str,paramValues):
 
-        s = len(self.U)
         ind = 0
 
         def _select_mu(widget):
@@ -299,23 +300,26 @@ class SessionPanel(Panel):
             ind = i
             self.plotSpectrum(A,ind,spectrumplot,efcnplot,plotWindow)
 
-        Label(master=self,text='Equations:').pack(side=TOP,anchor='w')
+        Label(master=self,text='Equations:',
+              font="Verdana 10 bold").pack(side=TOP,anchor=W)
 
         for eqn in equations:
             Label(master=self,text=eqn).pack(side=TOP)
 
 
-        Label(master=self,text='Eigenfunction Plot:').pack(side=TOP,anchor='w')
+        Label(master=self,text='Eigenfunction Plot:',
+              font="Verdana 10 bold").pack(side=TOP,anchor=W)
 
         modVar=IntVar()            
         modbutton = Checkbutton(master=self, text='Polar plot',variable=modVar)
         modbutton.pack(side=TOP)
         modbutton.configure(command=lambda cbutton=modbutton:_changePlot(cbutton))
         
-        Label(master=self, text='Mu Values:').pack(side=TOP,anchor='w')
+        Label(master=self, text='Mu Values:',
+              font="Verdana 10 bold").pack(side=TOP,anchor='w')
 
         canvas = Canvas(self,width=150, borderwidth=0)
-        frame = Frame(canvas, background='white')
+        frame = Frame(canvas)#, background='white')
         vsb = Scrollbar(self, orient="vertical", command=canvas.yview)
         canvas.configure(yscrollcommand=vsb.set)
 
@@ -331,11 +335,13 @@ class SessionPanel(Panel):
             slider.pack(side=LEFT, fill=Y)
         
         frame.bind("<Configure>", lambda event:canvas.configure(scrollregion=canvas.bbox("all")))
-
+        i = 0
         for muval in self.MU:
             mu_selected = IntVar()
             cb=Checkbutton(master=frame, text=str(muval), variable=mu_selected)
-            cb.pack(side=TOP,fill=BOTH,anchor='w')
+            #cb.pack(side=TOP,fill=BOTH,anchor='w')
+            cb.grid(row=i,column=0, sticky=W,columnspan=2)
+            i = i+1
             cb.configure(command=lambda widget=cb:_select_mu(widget))
 
     def plotEigenfunction(self,efcnplot,plot,specMat,x):
@@ -373,7 +379,6 @@ class SessionPanel(Panel):
             efcnplot.plot(x,numpy.imag(y),cImag,label='imag')
             efcnplot.legend(fontsize=10)
 
-            #efcnplot.set_xlim(0, P*L)
             efcnplot.set_xlabel('$x$')
             efcnplot.set_ylabel('$y(x)$')
 

@@ -4,6 +4,8 @@
 # This software is distributed under the terms of the GNU General Public License
 #
 
+import pdb
+
 import sys
 import string
 from libhill import *
@@ -49,16 +51,22 @@ class EntryPanel(Panel):
 
             def _enterSystem(s):        
 
-                def _enterCoefficients():
-                    order = int(orderbox.get())
+                def _enterCoefficients(order):
+
                     coeffboxes = []
 
+                    # loop through each coefficient box within one equation
                     for i in range(order,-1,-1):
+                        existing = coeffvector[hashmap[s]].split(':')
                         derivstr = ''
                         box = Entry(master=eqnDialog)
                         coeffboxes.append(box)
-                        box.insert(0, 1)
-                
+                        
+                        if (len(existing) == order+1):
+                            box.insert(0,existing[i])
+                        else:
+                            box.insert(0,1)
+
                         for j in range(0,i):
                             derivstr = derivstr + "'"
 
@@ -80,18 +88,29 @@ class EntryPanel(Panel):
                         coeffvector[hashmap[s]] += ':'.join(str_array)
                         eqnDialog.destroy()
 
-                    Button(master=eqnDialog,text='Continue',command=_saveCoefficients).grid(row=order+2)
-            
+                    Button(master=eqnDialog,text='Continue',command=_saveCoefficients).grid(row=order+2,column=0)
+                    Button(master=eqnDialog,text='Change Order',command=lambda:_changeOrder()).grid(row=order+2,column=1)
+
+                    def _changeOrder():
+                        _enterSystem(s)
+                        coeffvector[hashmap[s]]=''
+                        eqnDialog.destroy()
+
+
                 eqnDialog = Panel()
                 eqnDialog.wm_title(s+": Enter Coefficients")
-                Label(master=eqnDialog, text='Maximum Differential Order:').grid(row=0)
-                orderstr =  StringVar()
-                orderbox = Entry(master=eqnDialog, textvariable=orderstr)
-                orderbox.insert(0, "0")
-                orderbox.grid(row=0,column=1)
-                b = Button(master=eqnDialog, text='Setup Equation',command=_enterCoefficients)
-                b.grid(row=0,column=2)
-                b.configure(command=lambda:[_enterCoefficients(), b.destroy(), orderbox.configure(state='disabled')])
+                if (len(coeffvector) and len(coeffvector[hashmap[s]])):
+                    s_coeff = coeffvector[hashmap[s]].split(':')
+                    _enterCoefficients(len(s_coeff)-1)
+                else:
+                    Label(master=eqnDialog, text='Maximum Differential Order:').grid(row=0)
+                    orderstr =  StringVar()
+                    orderbox = Entry(master=eqnDialog, textvariable=orderstr)
+                    orderbox.insert(0, "0")
+                    orderbox.grid(row=0,column=1)
+                    b = Button(master=eqnDialog, text='Setup Equation',command=lambda:_enterCoefficients(int(orderbox.get())))
+                    b.grid(row=0,column=2)
+                    b.configure(command=lambda:[_enterCoefficients(int(orderbox.get())), b.destroy(), orderbox.configure(state='disabled')])
 
       
             coeffvector = []
@@ -134,15 +153,25 @@ class EntryPanel(Panel):
                                "MuVals" : Z , 
                                "Coefficients" : coeffstr ,
                                "Parameters" : param}
+                print coeffstr
+                sys.stdout.flush()
                 if debug:
-                    sysHashmap = { "VectorSize" : 1, 
+                    sysHashmap = { "VectorSize" : 2, 
                                    "FourierModes" : 10, 
                                    "Period" : pi, 
                                    "NumPeriods" : 2, 
                                    "MuVals" : 50 , 
-                                   "Orders" : "4", 
-                                   "Coefficients" : "(1-a^2)*sin(x)*cos(x):a:-sin(x):0:-1",
-                                   "Parameters" : "a:0:1:10" }
+                                   "Coefficients" : "sqrt(1+v0)*sin(2*x);-0.5+(1+v0)*(1-cos(2*x)):0:-0.5;0.5-(1+cos(2*x)):0:0.5;-sqrt(1+v0)*sin(2*x)",
+                                   "Parameters" : "v0:-1:1:10"}
+
+                    # sysHashmap = { "VectorSize" : 1, 
+                    #                "FourierModes" : 10, 
+                    #                "Period" : pi, 
+                    #                "NumPeriods" : 2, 
+                    #                "MuVals" : 50 , 
+                    #                "Orders" : "4", 
+                    #                "Coefficients" : "(1-a^2)*sin(x)*cos(x):a:-sin(x):0:-1",
+                    #                "Parameters" : "a:0:1:10" }
 
                 sessionDialog.destroy()
 #                 if len(param) > 0:
