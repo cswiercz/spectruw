@@ -14,6 +14,7 @@ from matplotlib.figure import Figure
 from fractions import gcd
 import pdb
 import sys
+import csv
 if sys.version_info[0] < 3:
     import Tkinter as Tk
 else:
@@ -37,6 +38,7 @@ class SessionPanel(Panel):
     cid = None   
     plot_handles = None
     colors = None
+    sysHashmap = None
     def __init__(self,sysHashmap, *args, **kwargs):
 
         Panel.__init__(self, *args, **kwargs)
@@ -48,7 +50,8 @@ class SessionPanel(Panel):
         period = sysHashmap["Period"]
         muSize = sysHashmap["MuVals"]
         params = sysHashmap["Parameters"]
-        
+        self.sysHashmap = sysHashmap
+
         name = ''
         paramValues = None
         if len(params)>0:
@@ -78,7 +81,13 @@ class SessionPanel(Panel):
         self.createInterface(equations,vecSize,plotptrs[0],plotptrs[1],plotptrs[2], plotptrs[3],result,name,paramValues)
         Tk.mainloop()
 
-
+    def addFourierModes(self,nstr):
+        N = int(nstr)
+        newHashmap = self.sysHashmap
+        newHashmap["FourierModes"] = N
+        SessionPanel(newHashmap)
+        self.destroy()
+        
     def computeSpectrum(self,vecSize,coeffStr,param_str,paramValues):
 
         # To do: Add support for non-local coefficients
@@ -186,6 +195,7 @@ class SessionPanel(Panel):
             
         # Connect for changing the view limits
         # retain a reference to avoid garbage collection
+        efcnplot.autoscale(enable=True,axis='both',tight=True)
         cid = efcnplot.callbacks.connect('xlim_changed', efcnchange)
         #efcnplot.callbacks.connect('ylim_changed', efcnchange)
 
@@ -300,12 +310,58 @@ class SessionPanel(Panel):
             ind = i
             self.plotSpectrum(A,ind,spectrumplot,efcnplot,plotWindow)
 
+        fig = Figure(figsize=(5,self.V-1))
+        ax = fig.add_axes([0,0,1,1])
         Label(master=self,text='Equations:',
               font="Verdana 10 bold").pack(side=TOP,anchor=W)
 
+        # build a rectangle in axes coords
+        left, width = 0, .5
+        bottom, height = .25, .5
+        right = left + width
+        top = bottom + height
+                
+        # ax.text(left, bottom, 'left top',
+        #         horizontalalignment='left',
+        #         verticalalignment='top',
+        #         transform=ax.transAxes)
+        
+        i = 0;
         for eqn in equations:
-            Label(master=self,text=eqn).pack(side=TOP)
+            ax.text(left+.1, top-i, r'$'+eqn+'$',
+                    horizontalalignment='left',
+                    verticalalignment='center',
+                    transform=ax.transAxes)
+            i = i+.2
 
+        eqnframe = FigureCanvasTkAgg(fig,master=self)
+        eqnframe.show()
+        eqnframe.get_tk_widget().pack(side=TOP)
+
+        def _addFourierModes():
+            dialog = Panel()
+            dialog.wm_title("Specify Fourier Modes")
+            fstr = StringVar()
+            fbox = Entry(master=dialog, textvariable=fstr)
+            fbox.insert(0,"10")
+            fbox.pack(side=LEFT)
+            b = Button(master=dialog, text='Compute')
+            b.pack(side=LEFT) 
+            b.configure(command=lambda:[self.addFourierModes(fbox.get()), dialog.destroy()])
+        def _export():
+            test_file = open(filebox.get(),'wb')
+            fieldnames = ('key', 'value')
+            csvwriter = csv.DictWriter(test_file, delimiter=',',fieldnames=fieldnames)
+            csvwriter.writeheader()
+            
+            for key, value in self.sysHashmap.iteritems():
+                csvwriter.writerow({'key' : key, 'value': value})
+            test_file.close()
+
+        Button(master=self, text='Add Fourier Modes', command=_addFourierModes).pack(side=TOP,anchor='w')
+        Button(master=self, text='Export', command=_export).pack(side=TOP,anchor='w')
+        filebox = Entry(master=self)
+        filebox.pack(side=TOP)
 
         Label(master=self,text='Eigenfunction Plot:',
               font="Verdana 10 bold").pack(side=TOP,anchor=W)
